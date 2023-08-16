@@ -5,76 +5,77 @@ from selenium.webdriver.common.keys import Keys
 from bs4 import BeautifulSoup
 import time
 import pandas as pd
-import csv
 
-
-
+url = "https://www.inside.com.tw/"
 options = Options()
 options.add_argument("--disable-notifications")
 options.add_experimental_option('excludeSwitches', ['enable-logging'])
 
-chrome = webdriver.Chrome(options=options)
-chrome.get("https://www.inside.com.tw/")
-chrome.maximize_window()
+driver = webdriver.Chrome(options=options)
+driver.get(url)
+driver.maximize_window()
 
-### KeyWord Search
-search_icon = chrome.find_element(By.CLASS_NAME, 'js-search_submit.search_submit.icon-search')
-search_icon.click()
-search = chrome.find_element(By.ID, 'search')
-time.sleep(1)
-search.send_keys('Musk', Keys.ENTER)
-
-### Article List
-time.sleep(2)
-nums = len(chrome.find_elements(By.CLASS_NAME, 'post_list_item'))
-page = 0
-
-article_dict = {}
-article_dict['title'] = []
-article_dict['article'] = []
-
-
-# while page != 0:
-for i in range(2):
-    titles = chrome.find_elements(By.CLASS_NAME, 'post_list_item')
-    title = titles[i]
-    t = title.find_element(By.CLASS_NAME, 'js-auto_break_title ')
-    t.click()
-
-    titlename = chrome.find_elements(By.CLASS_NAME, 'post_header_title.js-auto_break_title')[0].text
-    article_dict['title'].append(titlename)
-
-    print(titlename, '\n')
-    content = chrome.find_elements(By.CLASS_NAME, 'ck-section')
-    article = ""
-    for cont in content:
-        if "加入 INSIDE 會員" in cont.text:
-            break
-        print(cont.text, '\n')
-        article = article + cont.text
-    
-    article_dict['article'].append(article)
-
-    time.sleep(3)
-    chrome.back()
+def setKeyword(keyword):
+    ### KeyWord Search
+    search_icon = driver.find_element(By.CLASS_NAME, 'js-search_submit.search_submit.icon-search')
+    search_icon.click()
+    search = driver.find_element(By.ID, 'search')
     time.sleep(1)
+    search.send_keys(f'{keyword}', Keys.ENTER)
+    time.sleep(2)
+    
+def ReadArticle(driver, page=10):
+    ### Search Result List
 
-    chrome.execute_script("window.scrollBy(0, 300);")
+    article_dict = {}
+    article_dict['title'] = []
+    article_dict['article'] = []
 
-# chrome.find_element(By.CLASS_NAME, 'pagination_item-next-wrapper').click()
-# page += 1
-a = pd.DataFrame(article_dict)
-csvPath = 'test.csv'
-a.to_csv(csvPath, encoding='utf_8_sig')
-print(pd.DataFrame(article_dict))
-# soup = BeautifulSoup(chrome.page_source, 'html.parser')
-# titles = soup.find_all('div', class_='post_list_item_content')
-# # print(titles)
+    while page:
+        nums = len(driver.find_elements(By.CLASS_NAME, 'post_list_item'))
+        for i in range(nums):
+            titles = driver.find_elements(By.CLASS_NAME, 'post_list_item')
+            title = titles[i]
+            t = title.find_element(By.CLASS_NAME, 'js-auto_break_title ')
+            t.click()
 
+            titlename = driver.find_elements(By.CLASS_NAME, 'post_header_title.js-auto_break_title')[0].text
+            article_dict['title'].append(titlename)
 
-# for title in titles:
-#     post = title.find('h3', class_='post_title')
-#     if post:
-#         print(post.getText())
-#     # print(post)
+            print(titlename, '\n')
+            content = driver.find_elements(By.CLASS_NAME, 'ck-section')
+            article = ""
+            for cont in content:
+                if "加入 INSIDE 會員" in cont.text or "責任編輯" in cont.text or "核稿編輯" in cont.text:
+                    break
+                print(cont.text, '\n')
+                article = article + cont.text
+            
+            article_dict['article'].append(article)
 
+            time.sleep(5)
+            driver.back()
+            time.sleep(1)
+
+            driver.execute_script("window.scrollBy(0, 300);")
+
+        driver.find_element(By.CLASS_NAME, 'pagination_item-next-wrapper').click()
+        page -= 1
+        time.sleep(3)
+    
+    return article_dict
+
+def CreateCSV(csvPath, article_dict):
+    print("Save CSV...")
+    a = pd.DataFrame(article_dict) 
+    a.to_csv(csvPath, encoding='utf_8_sig')
+    print("Complete!")
+
+if __name__ == '__main__':
+    keyword = "Musk"
+    maxPage = 2
+    csvPath = 'test.csv'
+
+    setKeyword(keyword=keyword)
+    article_dict = ReadArticle(driver=driver, page=maxPage)
+    CreateCSV(csvPath=csvPath, article_dict=article_dict)
