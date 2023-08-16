@@ -5,6 +5,8 @@ from selenium.webdriver.common.keys import Keys
 from bs4 import BeautifulSoup
 import time
 import pandas as pd
+import argparse
+
 
 url = "https://www.inside.com.tw/"
 options = Options()
@@ -75,6 +77,14 @@ if __name__ == '__main__':
     keyword = "Musk"
     maxPage = 2
     csvPath = 'test.csv'
+
+    parser = argparse.ArgumentParser(prog='scraper.py', description='test')
+    parser.add_argument('--keyword', '-kh', default='Musk', type=str, required=False, help='Input the search keyword')
+    parser.add_argument('--page', default=2, type=int, required=False, help='Set the maximum search page')
+    parser.add_argument('--path', default='test.csv', type=str, require=False, help='Set the CSV save path')
+
+    arg = parser.parse_args()
+
 
     setKeyword(keyword=keyword)
     article_dict = ReadArticle(driver=driver, page=maxPage)
