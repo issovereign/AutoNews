@@ -7,15 +7,15 @@ import time
 import pandas as pd
 import argparse
 
+def NetworkSet(url):
+    options = Options()
+    options.add_argument("--disable-notifications")
+    options.add_experimental_option('excludeSwitches', ['enable-logging'])
 
-url = "https://www.inside.com.tw/"
-options = Options()
-options.add_argument("--disable-notifications")
-options.add_experimental_option('excludeSwitches', ['enable-logging'])
-
-driver = webdriver.Chrome(options=options)
-driver.get(url)
-driver.maximize_window()
+    global driver
+    driver = webdriver.Chrome(options=options)
+    driver.get(url)
+    driver.maximize_window()
 
 def setKeyword(keyword):
     ### KeyWord Search
@@ -26,16 +26,20 @@ def setKeyword(keyword):
     search.send_keys(f'{keyword}', Keys.ENTER)
     time.sleep(2)
     
-def ReadArticle(driver, page=10):
+def ReadArticle(driver, numPage=10, numArticle=1000):
     ### Search Result List
 
     article_dict = {}
     article_dict['title'] = []
     article_dict['article'] = []
 
-    while page:
+
+    while numPage:
         nums = len(driver.find_elements(By.CLASS_NAME, 'post_list_item'))
         for i in range(nums):
+            if numArticle == 0:
+                return article_dict
+            
             titles = driver.find_elements(By.CLASS_NAME, 'post_list_item')
             title = titles[i]
             t = title.find_element(By.CLASS_NAME, 'js-auto_break_title ')
@@ -54,15 +58,17 @@ def ReadArticle(driver, page=10):
                 article = article + cont.text
             
             article_dict['article'].append(article)
-
+            
+            driver.execute_script("window.scrollBy(0, 300);")
             time.sleep(5)
             driver.back()
             time.sleep(1)
 
             driver.execute_script("window.scrollBy(0, 300);")
+            numArticle -= 1
 
         driver.find_element(By.CLASS_NAME, 'pagination_item-next-wrapper').click()
-        page -= 1
+        numPage -= 1
         time.sleep(3)
     
     return article_dict
@@ -73,19 +79,21 @@ def CreateCSV(csvPath, article_dict):
     a.to_csv(csvPath, encoding='utf_8_sig')
     print("Complete!")
 
-if __name__ == '__main__':
-    keyword = "Musk"
-    maxPage = 2
-    csvPath = 'test.csv'
 
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog='scraper.py', description='test')
-    parser.add_argument('--keyword', '-kh', default='Musk', type=str, required=False, help='Input the search keyword')
-    parser.add_argument('--page', default=2, type=int, required=False, help='Set the maximum search page')
-    parser.add_argument('--path', default='test.csv', type=str, require=False, help='Set the CSV save path')
+    parser.add_argument('--keyword', '-k', default='Musk', type=str, required=False, help='Input the search keyword.')
+    parser.add_argument('--numPage', '-P', default=1000, type=int, required=False, help='Set the maximum search page.')
+    parser.add_argument('--path', default='test.csv', type=str, required=False, help='Set the CSV save path.')
+    parser.add_argument('--numArticle', '-A', default=1000, type=int, required=False, help='Set the maximum article.')
 
     arg = parser.parse_args()
+    keyword = arg.keyword
+    numPage = arg.numPage
+    numArticle = arg.numArticle
+    csvPath = arg.path
 
-
+    NetworkSet("https://www.inside.com.tw/")
     setKeyword(keyword=keyword)
-    article_dict = ReadArticle(driver=driver, page=maxPage)
+    article_dict = ReadArticle(driver=driver, numPage=numPage, numArticle=numArticle)
     CreateCSV(csvPath=csvPath, article_dict=article_dict)
