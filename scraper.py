@@ -96,3 +96,5 @@ def scraper():
     setKeyword(keyword=keyword)
     article_dict = ReadArticle(driver=driver, numPage=numPage, numArticle=numArticle)
     CreateCSV(csvPath=csvPath, article_dict=article_dict)
+
+    return article_dict
