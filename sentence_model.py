@@ -1,8 +1,17 @@
 from sentence_transformers import SentenceTransformer, util
+from transformers import AutoTokenizer, AutoModel
 
 def load_sentence_model():
     model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
     return model
+
+def tokenizer():
+    tokenizer = AutoTokenizer.from_pretrained('sentence-transformers/all-mpnet-base-v2')
+    model = AutoModel.from_pretrained('sentence-transformers/all-mpnet-base-v2')
+
+    # Tokenize sentences
+    encoded_input = tokenizer(sentences, padding=True, truncation=True, return_tensors='pt')
+
 
 def sentences_similarity(model, sentences):
 
