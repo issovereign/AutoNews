@@ -79,7 +79,7 @@ def CreateCSV(csvPath, article_dict):
     a.to_csv(csvPath, encoding='utf_8_sig')
     print("Complete!")
 
-def main():
+def scraper():
     parser = argparse.ArgumentParser(prog='scraper.py', description='test')
     parser.add_argument('--keyword', '-k', default='Musk', type=str, required=False, help='Input the search keyword.')
     parser.add_argument('--numPage', '-P', default=1000, type=int, required=False, help='Set the maximum search page.')
@@ -96,7 +96,3 @@ def main():
     setKeyword(keyword=keyword)
     article_dict = ReadArticle(driver=driver, numPage=numPage, numArticle=numArticle)
     CreateCSV(csvPath=csvPath, article_dict=article_dict)
-
-
-if __name__ == '__main__':
-    main()
