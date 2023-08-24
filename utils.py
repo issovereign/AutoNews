@@ -25,6 +25,7 @@ def single_news_get_keywords(news, sentence_processor, threshold=0.8):
     news_tokens_embeddings = sentence_processor.tokens2embeddings(title_tokens + article_tokens)
 
     # use article embedding to compare every tokens
+    # normalize similarities so threshold can be used
     # find out those tokens should be keep as keywords
     article_embedding = sentence_processor.tokens2embeddings(article)
     article2news_similarities = sentence_processor.sentences_similarity(article_embedding + news_tokens_embeddings)
