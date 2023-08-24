@@ -1,23 +1,36 @@
 from sentence_transformers import SentenceTransformer, util
 from transformers import AutoTokenizer, AutoModel
+import torch
+import torch.nn.functional as F
 
 def load_sentence_model():
-    model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
+    model = AutoModel.from_pretrained('sentence-transformers/all-mpnet-base-v2')
     return model
 
-def tokenizer():
+def load_tokenizer():
     tokenizer = AutoTokenizer.from_pretrained('sentence-transformers/all-mpnet-base-v2')
-    model = AutoModel.from_pretrained('sentence-transformers/all-mpnet-base-v2')
+    return tokenizer
 
-    # Tokenize sentences
+#Mean Pooling - Take attention mask into account for correct averaging
+def mean_pooling(model_output, attention_mask):
+    token_embeddings = model_output[0] #First element of model_output contains all token embeddings
+    input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+    return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+
+def sentence2tokens(tokenizer, sentences):
     encoded_input = tokenizer(sentences, padding=True, truncation=True, return_tensors='pt')
+    return encoded_input
 
+def tokens2embeddings(model, encoded_input):
+    with torch.no_grad():
+        model_output = model(**encoded_input)
 
-def sentences_similarity(model, sentences):
+    tokens_embeddings = mean_pooling(model_output, encoded_input['attention_mask'])
+    tokens_embeddings = F.normalize(tokens_embeddings, p=2, dim=1)
 
-    embeddings = model.encode(sentences)
-    print(embeddings)
+    return tokens_embeddings
 
+def sentences_similarity(embeddings):
     sim_list = []
     for i in range(1, len(embeddings)):
 
@@ -26,3 +39,19 @@ def sentences_similarity(model, sentences):
         sim_list.append(curr_sim.tolist()[0][0])
     
     return sim_list
+
+
+# original ver.
+# def sentences_similarity(model, sentences):
+
+#     embeddings = model.encode(sentences)
+#     print(embeddings)
+
+#     sim_list = []
+#     for i in range(1, len(embeddings)):
+
+#         curr_sim = util.cos_sim(embeddings[0], embeddings[i])
+#         print("{0:.4f}".format(curr_sim.tolist()[0][0]))
+#         sim_list.append(curr_sim.tolist()[0][0])
+    
+#     return sim_list
