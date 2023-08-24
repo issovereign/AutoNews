@@ -3,43 +3,39 @@ from transformers import AutoTokenizer, AutoModel
 import torch
 import torch.nn.functional as F
 
-def load_sentence_model():
-    model = AutoModel.from_pretrained('sentence-transformers/all-mpnet-base-v2')
-    return model
+class SentenceProcessor:
+    def __init__(self, model_name='sentence-transformers/all-mpnet-base-v2') -> None:
+        self.model = AutoModel.from_pretrained(model_name)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-def load_tokenizer():
-    tokenizer = AutoTokenizer.from_pretrained('sentence-transformers/all-mpnet-base-v2')
-    return tokenizer
+    #Mean Pooling - Take attention mask into account for correct averaging
+    def mean_pooling(self, model_output, attention_mask):
+        token_embeddings = model_output[0] #First element of model_output contains all token embeddings
+        input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+        return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
 
-#Mean Pooling - Take attention mask into account for correct averaging
-def mean_pooling(model_output, attention_mask):
-    token_embeddings = model_output[0] #First element of model_output contains all token embeddings
-    input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-    return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+    def sentences2tokens(self, sentences):
+        encoded_input = self.tokenizer(sentences, padding=True, truncation=True, return_tensors='pt')
+        return encoded_input
 
-def sentence2tokens(tokenizer, sentences):
-    encoded_input = tokenizer(sentences, padding=True, truncation=True, return_tensors='pt')
-    return encoded_input
+    def tokens2embeddings(self, encoded_input):
+        with torch.no_grad():
+            model_output = self.model(**encoded_input)
 
-def tokens2embeddings(model, encoded_input):
-    with torch.no_grad():
-        model_output = model(**encoded_input)
+        tokens_embeddings = self.mean_pooling(model_output, encoded_input['attention_mask'])
+        tokens_embeddings = F.normalize(tokens_embeddings, p=2, dim=1)
 
-    tokens_embeddings = mean_pooling(model_output, encoded_input['attention_mask'])
-    tokens_embeddings = F.normalize(tokens_embeddings, p=2, dim=1)
+        return tokens_embeddings
 
-    return tokens_embeddings
+    def sentences_similarity(self, embeddings):
+        sim_list = []
+        for i in range(1, len(embeddings)):
 
-def sentences_similarity(embeddings):
-    sim_list = []
-    for i in range(1, len(embeddings)):
-
-        curr_sim = util.cos_sim(embeddings[0], embeddings[i])
-        print("{0:.4f}".format(curr_sim.tolist()[0][0]))
-        sim_list.append(curr_sim.tolist()[0][0])
-    
-    return sim_list
-
+            curr_sim = util.cos_sim(embeddings[0], embeddings[i])
+            print("{0:.4f}".format(curr_sim.tolist()[0][0]))
+            sim_list.append(curr_sim.tolist()[0][0])
+        
+        return sim_list
 
 # original ver.
 # def sentences_similarity(model, sentences):
