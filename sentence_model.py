@@ -18,6 +18,11 @@ class SentenceProcessor:
         encoded_input = self.tokenizer(sentences, padding=True, truncation=True, return_tensors='pt')
         return encoded_input
 
+    def tokenids2words(self, encoded_input):
+        token_inputs_ids = encoded_input['input_ids'].tolist()[0]
+        token_words = self.tokenizer.convert_ids_to_tokens(token_inputs_ids)
+        return token_words
+
     def tokens2embeddings(self, encoded_input):
         with torch.no_grad():
             model_output = self.model(**encoded_input)
