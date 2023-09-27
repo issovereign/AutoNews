@@ -1,12 +1,14 @@
 from sentence_transformers import SentenceTransformer, util
-from transformers import AutoTokenizer, AutoModel
+from transformers import AutoTokenizer, AutoModel, BertTokenizerFast
 import torch
 import torch.nn.functional as F
 
 class SentenceProcessor:
     def __init__(self, model_name='sentence-transformers/all-mpnet-base-v2') -> None:
-        self.model = AutoModel.from_pretrained(model_name)
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        # self.model = AutoModel.from_pretrained(model_name)
+        # self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.model = AutoModel.from_pretrained('ckiplab/bert-base-chinese-ws')
+        self.tokenizer = BertTokenizerFast.from_pretrained('bert-base-chinese')
 
     #Mean Pooling - Take attention mask into account for correct averaging
     def mean_pooling(self, model_output, attention_mask):
