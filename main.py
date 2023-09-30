@@ -15,8 +15,12 @@ def main():
 
     for news in news_dict.items():
         print(news[0])
-        keywords_every_news_list.append(single_news_get_keywords(news, sentence_processor))
-
+        curr_news_keywords = single_news_get_keywords(news, sentence_processor)
+        print("curr_news_keywords: ", curr_news_keywords)
+        keywords_every_news_list.append(curr_news_keywords)
+    
+    print(keywords_every_news_list)
+        
     # send first news and keywords to gpt4
 
 

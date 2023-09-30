@@ -1,5 +1,9 @@
 import csv
+import string
 
+punctuation_set = set(string.punctuation)
+punctuation_set.update(['。', '》', '《', '「', '」', '（', '）', '，', '？', '！', '；', '：', '—', '、'])
+    
 def load_csv(file_path="scraper.csv"):
     news_dict = {}
     
@@ -15,35 +19,48 @@ def normalize(lst):
     max_val = max(lst)
     return [(x - min_val) / (max_val - min_val) for x in lst]
 
-def single_news_get_keywords(news, sentence_processor, threshold=0.8):
+def single_news_get_keywords(news, sentence_processor, threshold=0.96):
     
     title, article = news
     
-    # get title's and article's tokens and embeddings
-    news_tokens = sentence_processor.sentences2tokens(title + article)
-    news_tokens_words = sentence_processor.tokenids2words(news_tokens)
-    print("tokens: ", news_tokens)
-    print("tokens to words: ", news_tokens_words)
+    # get title's and article's words
+    news_words = sentence_processor.word_segmenter([title + article], use_delim=True)[0]
+    news_words_seted = list(set(news_words))
+    news_words_final = []
+    for w in news_words_seted:
+        if w not in punctuation_set:
+            news_words_final.append(w)
 
-    news_tokens_embeddings = sentence_processor.tokens2embeddings(news_tokens)
-    # print("some embeddings: ", news_tokens_embeddings[:3])
+    # print("news_words:", news_words_seted)
 
-    # use article embedding to compare every tokens
+    # get all news words' tokens and embeddings
+    news_tokens = []
+    for word in news_words_final:
+        news_tokens.append(sentence_processor.sentences2tokens(word))
+    # print(len(news_tokens))
+
+    news_tokens_embeddings = [sentence_processor.tokens2embeddings(token) for token in news_tokens]
+    # print("news embeddings: ", news_tokens_embeddings[:3])
+
+    # use article embedding to compare every news word tokens
     # normalize similarities so threshold can be used
-    # find out those tokens should be keep as keywords
+    # find out which tokens should be kept as keywords
     article_tokens = sentence_processor.sentences2tokens(article)
     article_embedding = sentence_processor.tokens2embeddings(article_tokens)
-    article2news_similarities = sentence_processor.sentences_similarity(article_embedding + news_tokens_embeddings)
-    print(article2news_similarities)
+
+    all_embeddings = [article_embedding] + news_tokens_embeddings
+    # news_tokens_embeddings.insert(0, article_embedding)
+    
+    article2news_similarities = sentence_processor.sentences_similarity(all_embeddings)
+    # print("article2news_similarities: ", article2news_similarities)
     article2news_similarities = normalize(article2news_similarities)
     
     keywords = []
-    for token_word, simi in zip(news_tokens_words, article2news_similarities):
-        print("token_word and simi: ", token_word, simi)
+    for word, simi in zip(news_words_final, article2news_similarities):
+        print("token_word and simi: ", word, simi)
         if simi >= threshold:
-            keywords.append(token_word)
+            keywords.append(word)
     
-    print(keywords)
     return keywords
 
 # def call gpt to generate articles
