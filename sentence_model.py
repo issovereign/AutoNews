@@ -45,7 +45,7 @@ class SentenceProcessor:
         sim_list = []
         for i in range(1, len(embeddings)):
             curr_sim = cosine_similarity(embeddings[0].reshape(1, -1), embeddings[i].reshape(1, -1))[0][0]
-            print(curr_sim)
+            # print(curr_sim)
             sim_list.append(curr_sim)
         
         return sim_list
