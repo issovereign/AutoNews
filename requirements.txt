@@ -1,4 +1,4 @@
-torch==2.2.0+cu118
+torch==2.2.0
 beautifulsoup4==4.11.1
 ckip_transformers==0.3.4
 Flask==2.1.2
