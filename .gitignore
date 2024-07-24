@@ -1,5 +1,7 @@
 
 test.csv
-scraper.csv
+# scraper.csv
 *.exe
-*.txt
+sk.txt
+*.pdf
+

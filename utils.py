@@ -1,6 +1,6 @@
 import csv
 import string
-import openai
+from openai import OpenAI
 
 
 punctuation_set = set(string.punctuation)
@@ -65,21 +65,22 @@ def single_news_get_keywords(news, sentence_processor, threshold=0.96):
     
     return keywords
 
-def gen_article_by_gpt(news_dict, keywords_str, model):
+def gen_article_by_gpt(news_dict, keywords_str, model, api_key):
 
-    with open('sk.txt', 'r') as file:
-        sk = file.read().strip()
+    client = OpenAI(
+        # This is the default and can be omitted
+        api_key=api_key,
+    )
 
-    openai.api_key = sk
     messages = [
     # {"role":"user", "content":"要怎麼發表會引起大眾關注的文章？\n請簡短回答"},
     {"role":"user", "content": keywords_str + "\n請利用上述關鍵字用繁體中文重新改寫下面這篇文章並給出一個標題:\n" + 
      list(news_dict.values())[0] + "\n注意書寫格式為 標題: xxx 換行 內文: xxx"},
     ]
 
-    chat_completion = openai.ChatCompletion.create(
-    model=model,
-    messages = messages,
+    chat_completion = client.chat.completions.create(
+        model=model,
+        messages = messages,
     )
 
     print(chat_completion.choices[0].message.content)
