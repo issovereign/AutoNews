@@ -67,10 +67,7 @@ def single_news_get_keywords(news, sentence_processor, threshold=0.96):
 
 def gen_article_by_gpt(news_dict, keywords_str, model, api_key):
 
-    client = OpenAI(
-        # This is the default and can be omitted
-        api_key=api_key,
-    )
+    client = OpenAI(api_key=api_key)
 
     messages = [
     # {"role":"user", "content":"要怎麼發表會引起大眾關注的文章？\n請簡短回答"},
@@ -78,11 +75,12 @@ def gen_article_by_gpt(news_dict, keywords_str, model, api_key):
      list(news_dict.values())[0] + "\n注意書寫格式為 標題: xxx 換行 內文: xxx"},
     ]
 
-    chat_completion = client.chat.completions.create(
+    response = client.responses.create(
         model=model,
-        messages = messages,
+        input=messages,
     )
-
-    print(chat_completion.choices[0].message.content)
-    return chat_completion.choices[0].message.content
-
+    
+    article = response.output_text.strip()
+    print(article)
+    
+    return article
