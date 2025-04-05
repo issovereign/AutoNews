@@ -1,5 +1,6 @@
 from flask import Flask, request, render_template_string
 from generate_fake_news import generate_fake_news
+import os
 
 app = Flask(__name__)
 
@@ -73,4 +74,6 @@ def upload_news():
     ''', title=title, content=content)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))  # Render 預設傳入 PORT 環境變數
+    app.run(host='0.0.0.0', port=port, debug=True)
