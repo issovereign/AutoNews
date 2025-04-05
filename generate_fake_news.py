@@ -3,7 +3,7 @@ from utils import load_csv, single_news_get_keywords, gen_article_by_gpt
 from sentence_model import SentenceProcessor
 
 
-def generate_fake_news(api_key, keyword="", model="gpt-4-0125-preview"):
+def generate_fake_news(api_key, keyword="", model="gpt-4o"):
     # need to edit scraper() to eat argument from web
     # scraper()
     news_dict = load_csv()
